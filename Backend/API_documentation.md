@@ -244,3 +244,96 @@
   }
   ```
 - **Used For**: Admin dashboard, monitoring system usage
+
+---
+
+## ⏰ **Time-Based CRUD Logic**
+
+### **CRUD Operations by Year**:
+
+| Operation | Current Year (2025) | Previous Years (2024, 2023...) |
+|-----------|--------------------|---------------------------------|
+| **Create** | ✅ Allowed | ✅ Allowed (timestamp auto-set to current) |
+| **Read** | ✅ Allowed | ✅ Allowed |
+| **Update** | ✅ Allowed | ❌ Forbidden (403 error) |
+| **Delete** | ✅ Allowed | ❌ Forbidden (403 error) |
+
+### **Affected Routes**:
+- `PUT /api/user/actions/:id` - Year check applied
+- `DELETE /api/user/actions/:id` - Year check applied
+
+---
+
+## 🔑 **Authentication & Authorization Summary**
+
+### **Role Hierarchy**:
+1. **🌐 Public**: No authentication required
+2. **🔒 Authenticated**: Valid JWT token required (any role)
+3. **👑 Admin**: Valid JWT token + admin role required
+
+### **Middleware Chain**:
+```javascript
+// Public routes (no middleware)
+app.use('/api/auth/login', authController.login);
+
+// Authenticated routes
+app.use('/api/user/*', authenticateToken);
+app.use('/api/auth/profile', authenticateToken);
+
+// Admin-only routes
+app.use('/api/admin/*', authenticateToken, requireAdmin);
+```
+
+### **Token Usage**:
+```javascript
+// Include in request headers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+## 📊 **Route Usage Examples**
+
+### **Admin Workflow**:
+1. `POST /api/auth/login` - Login as admin
+2. `GET /api/admin/stats` - Check system status
+3. `POST /api/admin/users` - Create new users
+4. `GET /api/admin/users` - Monitor all users
+
+### **User Workflow**:
+1. `POST /api/auth/login` - Login as user
+2. `POST /api/user/actions` - Create actions
+3. `GET /api/user/actions` - View actions
+4. `PUT /api/user/actions/:id` - Update current year actions
+5. `GET /api/user/actions/stats` - View statistics
+
+---
+
+## 🚀 **Quick Start**
+
+### **Default Credentials**:
+- **Admin**: `username: admin`, `password: admin123`
+
+### **Server Info**:
+- **Base URL**: `http://localhost:3001`
+- **Health Check**: `GET /api/health`
+
+### **Testing**:
+- **Automated Tests**: `npm test`
+- **Interactive Frontend**: Open `test/frontend-test.html`
+
+---
+
+## 📝 **Error Codes**
+
+| Status Code | Meaning | Common Causes |
+|-------------|---------|---------------|
+| 200 | Success | Request completed successfully |
+| 201 | Created | Resource created successfully |
+| 400 | Bad Request | Invalid input, validation errors |
+| 401 | Unauthorized | Missing or invalid token |
+| 403 | Forbidden | Insufficient permissions, time restrictions |
+| 404 | Not Found | Resource doesn't exist |
+| 500 | Server Error | Internal server issues |
+
+This comprehensive API documentation covers all routes, authentication requirements, and usage patterns for the User Action Tracking System.
