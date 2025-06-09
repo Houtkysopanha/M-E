@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Action Tracking System - Test Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        button.success {
+            background: #27ae60;
+        }
+
+        button.success:hover {
+            background: #229954;
+        }
+
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .user-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 User Action Tracking System</h1>
+            <p>Test Frontend for Backend API</p>
+        </div>
+
+        <div class="content">
+            <!-- User Info Section -->
+            <div id="userInfo" class="user-info hidden">
+                <h3>👤 Logged in as: <span id="currentUser"></span></h3>
+                <p>Role: <span id="currentRole"></span></p>
+                <button onclick="logout()">Logout</button>
+            </div>
+
+            <!-- Login Section -->
+            <div id="loginSection" class="section">
+                <h3>🔑 Login</h3>
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" placeholder="Enter username (default: admin)">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Enter password (default: admin123)">
+                </div>
+                <button onclick="login()">Login</button>
+                <div id="loginResponse" class="response hidden"></div>
+            </div>
+
+            <!-- Admin Section -->
+            <div id="adminSection" class="section hidden">
+                <h3>👑 Admin Functions</h3>
+                
+                <div class="grid">
+                    <div>
+                        <h4>Create User</h4>
+                        <div class="form-group">
+                            <label for="newUsername">Username:</label>
+                            <input type="text" id="newUsername" placeholder="New username">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">Password:</label>
+                            <input type="password" id="newPassword" placeholder="New password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newRole">Role:</label>
+                            <select id="newRole">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button onclick="createUser()">Create User</button>
+                    </div>
+
+                    <div>
+                        <h4>System Statistics</h4>
+                        <button onclick="getStats()">Get Statistics</button>
+                        <button onclick="getAllUsers()">Get All Users</button>
+                    </div>
+                </div>
+                
+                <div id="adminResponse" class="response hidden"></div>
+            </div>
+
+            <!-- User Actions Section -->
+            <div id="userSection" class="section hidden">
+                <h3>📝 User Actions</h3>
+                
+                <div class="grid">
+                    <div>
+                        <h4>Create Action</h4>
+                        <div class="form-group">
+                            <label for="actionTitle">Title:</label>
+                            <input type="text" id="actionTitle" placeholder="Action title">
+                        </div>
+                        <div class="form-group">
+                            <label for="actionDescription">Description:</label>
+                            <textarea id="actionDescription" placeholder="Action description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="actionCategory">Category:</label>
+                            <input type="text" id="actionCategory" placeholder="Category">
+                        </div>
+                        <button onclick="createAction()">Create Action</button>
+                    </div>
+
+                    <div>
+                        <h4>Manage Actions</h4>
+                        <button onclick="getActions()">Get My Actions</button>
+                        <button onclick="getActionStats()">Get Statistics</button>
+                        <div class="form-group">
+                            <label for="filterYear">Filter by Year:</label>
+                            <input type="number" id="filterYear" placeholder="e.g., 2025">
+                        </div>
+                        <button onclick="getActionsByYear()">Filter by Year</button>
+                    </div>
+                </div>
+                
+                <div id="userResponse" class="response hidden"></div>
+            </div>
+
+            <!-- API Testing Section -->
+            <div class="section">
+                <h3>🧪 API Testing</h3>
+                <button onclick="testHealth()">Test Health Check</button>
+                <button onclick="testProfile()">Test Get Profile</button>
+                <div id="testResponse" class="response hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken && currentUser) {
+                showUserInterface();
+            }
+            
+            // Set default login credentials
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin123';
+        });
+
+        // Utility functions
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+            element.classList.remove('hidden');
+        }
+
+        function showUserInterface() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            
+            document.getElementById('currentUser').textContent = currentUser.username;
+            document.getElementById('currentRole').textContent = currentUser.role;
+            
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminSection').classList.remove('hidden');
+            }
+        }
+
+        function hideUserInterface() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('adminSection').classList.add('hidden');
+        }
+
+        // API call wrapper
+        async function apiCall(method, endpoint, data = null) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            const config = {
+                method,
+                headers
+            };
+
+            if (data) {
+                config.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                const result = await response.json();
+                return { status: response.status, data: result };
+            } catch (error) {
+                return { status: 0, data: { success: false, message: error.message } };
+            }
+        }
+
+        // Authentication functions
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showResponse('loginResponse', { error: 'Username and password are required' }, true);
+                return;
+            }
+
+            const response = await apiCall('POST', '/auth/login', { username, password });
+            
+            if (response.data.success) {
+                authToken = response.data.data.token;
+                currentUser = response.data.data.user;
+                
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                showUserInterface();
+                showResponse('loginResponse', response.data);
+            } else {
+                showResponse('loginResponse', response.data, true);
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            hideUserInterface();
+        }
+
+        // Admin functions
+        async function createUser() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('newRole').value;
+
+            if (!username || !password) {
+                showResponse('adminResponse', { error: 'Username and password are required' }, true);
+                return;
+            }
+
+            const response = await apiCall('POST', '/admin/users', { username, password, role });
+            showResponse('adminResponse', response.data, !response.data.success);
+            
+            if (response.data.success) {
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+            }
+        }
+
+        async function getAllUsers() {
+            const response = await apiCall('GET', '/admin/users');
+            showResponse('adminResponse', response.data, !response.data.success);
+        }
+
+        async function getStats() {
+            const response = await apiCall('GET', '/admin/stats');
+            showResponse('adminResponse', response.data, !response.data.success);
+        }
+
+        // User functions
+        async function createAction() {
+            const title = document.getElementById('actionTitle').value;
+            const description = document.getElementById('actionDescription').value;
+            const category = document.getElementById('actionCategory').value;
+
+            if (!title) {
+                showResponse('userResponse', { error: 'Title is required' }, true);
+                return;
+            }
+
+            const actionData = {
+                title,
+                description,
+                category,
+                timestamp: new Date().toISOString()
+            };
+
+            const response = await apiCall('POST', '/user/actions', { data: actionData });
+            showResponse('userResponse', response.data, !response.data.success);
+            
+            if (response.data.success) {
+                document.getElementById('actionTitle').value = '';
+                document.getElementById('actionDescription').value = '';
+                document.getElementById('actionCategory').value = '';
+            }
+        }
+
+        async function getActions() {
+            const response = await apiCall('GET', '/user/actions');
+            showResponse('userResponse', response.data, !response.data.success);
+        }
+
+        async function getActionsByYear() {
+            const year = document.getElementById('filterYear').value;
+            const endpoint = year ? `/user/actions?year=${year}` : '/user/actions';
+            const response = await apiCall('GET', endpoint);
+            showResponse('userResponse', response.data, !response.data.success);
+        }
+
+        async function getActionStats() {
+            const response = await apiCall('GET', '/user/actions/stats');
+            showResponse('userResponse', response.data, !response.data.success);
+        }
+
+        // Test functions
+        async function testHealth() {
+            const response = await fetch(`${API_BASE.replace('/api', '')}/api/health`);
+            const data = await response.json();
+            showResponse('testResponse', data, !data.success);
+        }
+
+        async function testProfile() {
+            const response = await apiCall('GET', '/auth/profile');
+            showResponse('testResponse', response.data, !response.data.success);
+        }
+    </script>
+</body>
+</html>
