@@ -9,18 +9,30 @@
     "test": "node test/simpleTest.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.0.0",
+    "axios": "^1.9.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.3.1",
     "cors": "^2.8.5",
-    "express-rate-limit": "^7.1.5"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
+    "mongoose": "^8.0.0",
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "autoprefixer": "^10.4.21",
+    "nodemon": "^3.0.1",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8"
   },
-  "keywords": ["nodejs", "express", "mongodb", "authentication", "crud"],
+  "keywords": [
+    "nodejs",
+    "express",
+    "mongodb",
+    "authentication",
+    "crud"
+  ],
   "author": "Your Name",
   "license": "MIT"
 }
