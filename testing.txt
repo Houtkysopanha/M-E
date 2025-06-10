@@ -1,0 +1,643 @@
+
+//LoginForm.jsx
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../../services/authService';
+import { isAdmin } from '../../utils/auth';
+
+import LoadingSpinner from '../common/LoadingSpinner';
+
+const LoginForm = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
+  const [errorDisplayTime, setErrorDisplayTime] = useState(0);
+
+  // Use refs to directly control input values and prevent any clearing
+  const usernameRef = useRef(null);
+  const passwordRef = useRef(null);
+
+  // Simple sync - only needed for demo credential filling
+  useEffect(() => {
+    if (usernameRef.current) {
+      usernameRef.current.value = formData.username;
+    }
+    if (passwordRef.current) {
+      passwordRef.current.value = formData.password;
+    }
+  }, [formData]);
+
+  // Timer to track how long error has been visible (for demonstration)
+  useEffect(() => {
+    let interval;
+    if (error) {
+      setErrorDisplayTime(0);
+      interval = setInterval(() => {
+        setErrorDisplayTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setErrorDisplayTime(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [error]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    const newData = {
+      ...formData,
+      [name]: value
+    };
+
+    setFormData(newData);
+
+    // NEVER auto-clear error messages - they should stay until:
+    // 1. User manually clicks the X button
+    // 2. User successfully logs in
+    // 3. User clicks "Clear and Start Over"
+    // This ensures error messages are persistent like the input values
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Get current values from the form inputs
+    const username = formData.username.trim();
+    const password = formData.password.trim();
+
+    if (!username || !password) {
+      setError('Please enter both username and password');
+      return;
+    }
+
+    setLoading(true);
+    // IMPORTANT: Don't clear error here - keep previous error visible until we get a result
+    // This prevents the error from flashing/disappearing during the login request
+
+    try {
+      const result = await login({ username, password });
+
+      if (result.success) {
+        // Clear error and form on successful login
+        setError('');
+        setFormData({ username: '', password: '' });
+        if (isAdmin()) {
+          navigate('/super-admin');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        // On error, just show the error - DON'T touch the form data
+        setError(result.message || 'Login failed. Please check your credentials and try again.');
+        setHasAttempted(true);
+        // formData stays exactly as it was - no clearing!
+      }
+    } catch (error) {
+      // On network error, just show the error - DON'T touch the form data
+      setError('Network error. Please check your connection and try again.');
+      setHasAttempted(true);
+      // formData stays exactly as it was - no clearing!
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillDemoCredentials = (role) => {
+    if (role === 'admin') {
+      setFormData({ username: 'admin', password: 'admin123' });
+    } else {
+      setFormData({ username: 'testuser1', password: 'password123' });
+    }
+    // Clear any existing errors when demo credentials are filled
+    setError('');
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <div className="mx-auto h-12 w-12 bg-primary-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">📊</span>
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            User Action Tracking System
+          </p>
+        </div>
+
+        <form
+          className="mt-8 space-y-6"
+          onSubmit={handleSubmit}
+          autoComplete="off"
+          noValidate
+          onReset={(e) => e.preventDefault()}
+        >
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="username" className="sr-only">
+                Username
+              </label>
+              <input
+                ref={usernameRef}
+                id="username"
+                name="username"
+                type="text"
+                required
+                autoComplete="off"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm ${
+                  error && error.includes('Username')
+                    ? 'border-red-300 bg-red-50'
+                    : hasAttempted && formData.username
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-gray-300'
+                }`}
+                placeholder="Username"
+                value={formData.username}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
+            <div className="relative">
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                ref={passwordRef}
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="off"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm ${
+                  error && error.includes('password')
+                    ? 'border-red-300 bg-red-50'
+                    : hasAttempted && formData.password
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-gray-300'
+                }`}
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border-2 border-red-400 text-red-800 px-6 py-4 rounded-lg mb-6 shadow-lg sticky-error">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center mb-3">
+                    <svg className="w-6 h-6 mr-3 flex-shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-bold text-red-900 text-lg">❌ Login Failed</span>
+                    <span className="ml-2 text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-semibold">STAYS VISIBLE</span>
+                  </div>
+                  <div className="ml-9">
+                    <p className="text-red-800 font-semibold text-base mb-3">{error}</p>
+
+                    {error.includes('Username not found') && (
+                      <div className="mt-4 p-4 bg-red-100 rounded-lg border border-red-400">
+                        <p className="text-sm text-red-800">
+                          <span className="mr-2">💡</span>
+                          <strong>Tip:</strong> Make sure you're using the correct username. Usernames are case-sensitive.
+                        </p>
+                      </div>
+                    )}
+
+                    {error.includes('Incorrect password') && (
+                      <div className="mt-4 p-4 bg-red-100 rounded-lg border border-red-400">
+                        <p className="text-sm text-red-800">
+                          <span className="mr-2">🔑</span>
+                          <strong>Tip:</strong> Check your password carefully. Make sure Caps Lock is off and try typing it again.
+                        </p>
+                      </div>
+                    )}
+
+                    {error.includes('deactivated') && (
+                      <div className="mt-4 p-4 bg-red-100 rounded-lg border border-red-400">
+                        <p className="text-sm text-red-800">
+                          <span className="mr-2">📞</span>
+                          <strong>Tip:</strong> Contact your system administrator to reactivate your account.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-4 p-3 bg-green-50 border border-green-300 rounded-lg">
+                      <p className="text-sm text-green-800 font-medium">
+                        ✅ <strong>Your input has been preserved</strong> - just correct the error and try again.
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        📌 This message will stay visible until you successfully log in or manually dismiss it.
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1 font-mono">
+                        ⏱️ Error visible for: {errorDisplayTime} seconds
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError('')}
+                  className="text-red-600 hover:text-red-800 focus:outline-none ml-4 flex-shrink-0 transition-colors duration-200 p-1"
+                  title="Dismiss error message"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+
+
+          <div className="space-y-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <LoadingSpinner size="sm" text="" />
+              ) : (
+                <>
+                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <svg className="h-5 w-5 text-primary-500 group-hover:text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  {hasAttempted && error ? 'Try Again' : 'Sign in'}
+                </>
+              )}
+            </button>
+
+            {hasAttempted && error && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ username: '', password: '' });
+                  setError('');
+                  setHasAttempted(false);
+                }}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                disabled={loading}
+              >
+                🔄 Clear and Start Over
+              </button>
+            )}
+          </div>
+
+          {/* Demo Credentials */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">Demo Credentials</span>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => fillDemoCredentials('admin')}
+                  className="btn-secondary text-xs"
+                  disabled={loading}
+                >
+                  👑 Admin Demo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemoCredentials('user')}
+                  className="btn-secondary text-xs"
+                  disabled={loading}
+                >
+                  👤 User Demo
+                </button>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500">
+                  💡 Click the buttons above to auto-fill demo credentials
+                </p>
+                {hasAttempted && error && (
+                  <p className="text-xs text-blue-600 mt-2 font-medium">
+                    🎯 Try the demo credentials above if you're having trouble
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </form>
+
+
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { isAuthenticated, isAdmin } from './utils/auth';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import PublicHomePage from './pages/PublicHomePage';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import UserPage from './pages/UserPage';
+import SuperAdminPage from './pages/SuperAdminPage';
+
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<PublicHomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute>
+                <UserPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/super-admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <SuperAdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all route */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//index.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+
+  .btn-success {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+  }
+
+  .card-header {
+    @apply border-b border-gray-200 pb-4 mb-4;
+  }
+
+  .table-header {
+    @apply bg-gray-50 text-gray-700 font-medium text-sm uppercase tracking-wider;
+  }
+
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Error message animations */
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Persistent error message styling */
+.sticky-error {
+  position: relative;
+  animation: error-appear 0.4s ease-out;
+}
+
+.sticky-error::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ef4444, #dc2626, #ef4444, #dc2626);
+  background-size: 400% 400%;
+  border-radius: 8px;
+  z-index: -1;
+  animation: gradient-pulse 3s ease-in-out infinite;
+}
+
+@keyframes error-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes gradient-pulse {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}

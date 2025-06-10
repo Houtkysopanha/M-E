@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../../services/authService';
 import { isAdmin } from '../../utils/auth';
-
+import ErrorMessage from '../common/ErrorMessage';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const LoginForm = () => {
@@ -16,72 +16,46 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [hasAttempted, setHasAttempted] = useState(false);
 
-  // Use refs to directly control input values and prevent any clearing
-  const usernameRef = useRef(null);
-  const passwordRef = useRef(null);
-
-  // Simple sync - only needed for demo credential filling
-  useEffect(() => {
-    if (usernameRef.current) {
-      usernameRef.current.value = formData.username;
-    }
-    if (passwordRef.current) {
-      passwordRef.current.value = formData.password;
-    }
-  }, [formData]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    const newData = {
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    };
-
-    setFormData(newData);
-
-    // Keep error visible until user manually dismisses or submits again
-    // This ensures they see the error message for a reasonable time
+    }));
+    // Only clear error if user has made substantial changes (more than 2 characters)
+    if (error && value.length > 2) {
+      setError('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Get current values from the form inputs
-    const username = formData.username.trim();
-    const password = formData.password.trim();
-
-    if (!username || !password) {
+    
+    if (!formData.username || !formData.password) {
       setError('Please enter both username and password');
       return;
     }
 
     setLoading(true);
-    // Don't clear error here - let it show until we get a result
+    setError('');
 
     try {
-      const result = await login({ username, password });
+      const result = await login(formData);
 
       if (result.success) {
-        // Clear error and form on successful login
-        setError('');
-        setFormData({ username: '', password: '' });
+        // Redirect based on user role
         if (isAdmin()) {
           navigate('/super-admin');
         } else {
           navigate('/dashboard');
         }
       } else {
-        // On error, just show the error - DON'T touch the form data
         setError(result.message || 'Login failed. Please check your credentials and try again.');
         setHasAttempted(true);
-        // formData stays exactly as it was - no clearing!
       }
     } catch (error) {
-      // On network error, just show the error - DON'T touch the form data
       setError('Network error. Please check your connection and try again.');
       setHasAttempted(true);
-      // formData stays exactly as it was - no clearing!
     } finally {
       setLoading(false);
     }
@@ -112,30 +86,20 @@ const LoginForm = () => {
           </p>
         </div>
 
-        <form
-          className="mt-8 space-y-6"
-          onSubmit={handleSubmit}
-          autoComplete="off"
-          noValidate
-          onReset={(e) => e.preventDefault()}
-        >
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="username" className="sr-only">
                 Username
               </label>
               <input
-                ref={usernameRef}
                 id="username"
                 name="username"
                 type="text"
                 required
-                autoComplete="off"
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm ${
                   error && error.includes('Username')
                     ? 'border-red-300 bg-red-50'
-                    : hasAttempted && formData.username
-                    ? 'border-green-300 bg-green-50'
                     : 'border-gray-300'
                 }`}
                 placeholder="Username"
@@ -149,17 +113,13 @@ const LoginForm = () => {
                 Password
               </label>
               <input
-                ref={passwordRef}
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                autoComplete="off"
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm ${
                   error && error.includes('password')
                     ? 'border-red-300 bg-red-50'
-                    : hasAttempted && formData.password
-                    ? 'border-green-300 bg-green-50'
                     : 'border-gray-300'
                 }`}
                 placeholder="Password"
@@ -187,62 +147,12 @@ const LoginForm = () => {
             </div>
           </div>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 animate-fade-in">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium text-red-800">Login Failed</span>
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-red-700 font-medium">{error}</p>
-                    {error.includes('Username not found') && (
-                      <div className="mt-3 p-3 bg-red-200 rounded-lg border border-red-300">
-                        <p className="text-sm text-red-800">
-                          <span className="mr-1">💡</span>
-                          <strong>Tip:</strong> Make sure you're using the correct username. Usernames are case-sensitive.
-                        </p>
-                      </div>
-                    )}
-                    {error.includes('Incorrect password') && (
-                      <div className="mt-3 p-3 bg-red-200 rounded-lg border border-red-300">
-                        <p className="text-sm text-red-800">
-                          <span className="mr-1">🔑</span>
-                          <strong>Tip:</strong> Check your password carefully. Make sure Caps Lock is off and try typing it again.
-                        </p>
-                      </div>
-                    )}
-                    {error.includes('deactivated') && (
-                      <div className="mt-3 p-3 bg-red-200 rounded-lg border border-red-300">
-                        <p className="text-sm text-red-800">
-                          <span className="mr-1">📞</span>
-                          <strong>Tip:</strong> Contact your system administrator to reactivate your account.
-                        </p>
-                      </div>
-                    )}
-                    <div className="mt-3 text-sm text-red-600">
-                      <p>🔄 <strong>Your input has been preserved</strong> - just correct the error and try again.</p>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setError('')}
-                  className="text-red-700 hover:text-red-900 focus:outline-none ml-3 flex-shrink-0 transition-colors duration-200"
-                  title="Dismiss error message"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
-
-
+          <ErrorMessage
+            message={error}
+            onClose={() => setError('')}
+            showTips={true}
+            autoDismiss={false}
+          />
 
           <div className="space-y-3">
             <button
@@ -323,8 +233,6 @@ const LoginForm = () => {
             </div>
           </div>
         </form>
-
-
       </div>
     </div>
   );
