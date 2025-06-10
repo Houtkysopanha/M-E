@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import UserPage from './pages/UserPage';
 import SuperAdminPage from './pages/SuperAdminPage';
 
+
 function App() {
   return (
     <Router>
@@ -16,6 +17,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<PublicHomePage />} />
           <Route path="/login" element={<LoginPage />} />
+
 
           {/* Protected Routes */}
           <Route

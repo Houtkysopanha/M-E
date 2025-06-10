@@ -20,7 +20,7 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Username not found. Please check your username and try again.'
       });
     }
 
@@ -28,7 +28,7 @@ const login = async (req, res) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Account has been deactivated'
+        message: 'Your account has been deactivated. Please contact an administrator.'
       });
     }
 
@@ -38,7 +38,7 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Incorrect password. Please check your password and try again.'
       });
     }
 
