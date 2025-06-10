@@ -9,6 +9,7 @@ const User = require('./models/User');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);

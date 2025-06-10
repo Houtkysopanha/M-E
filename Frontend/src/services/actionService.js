@@ -86,3 +86,13 @@ export const getAllActions = async (params = {}) => {
     return { success: false, message: error.message };
   }
 };
+
+// Get user's assigned action plans
+export const getUserActionPlans = async () => {
+  try {
+    const response = await api.get('/user/action-plans');
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};

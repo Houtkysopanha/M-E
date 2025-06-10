@@ -71,3 +71,62 @@ export const getUserActions = async (userId, params = {}) => {
     return { success: false, message: error.message };
   }
 };
+
+// Action Plan Management
+
+// Create new action plan
+export const createActionPlan = async (actionPlanData) => {
+  try {
+    const response = await api.post('/admin/action-plans', actionPlanData);
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Get all action plans
+export const getAllActionPlans = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+
+    const url = `/admin/action-plans${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await api.get(url);
+
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Get specific action plan
+export const getActionPlan = async (id) => {
+  try {
+    const response = await api.get(`/admin/action-plans/${id}`);
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Update action plan
+export const updateActionPlan = async (id, actionPlanData) => {
+  try {
+    const response = await api.put(`/admin/action-plans/${id}`, actionPlanData);
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Delete action plan
+export const deleteActionPlan = async (id) => {
+  try {
+    const response = await api.delete(`/admin/action-plans/${id}`);
+    return { success: true, message: response.data.message };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};

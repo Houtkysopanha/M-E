@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  createAction, 
-  getActions, 
-  getAction, 
-  updateAction, 
-  deleteAction, 
-  getActionStats 
+const {
+  createAction,
+  getActions,
+  getAction,
+  updateAction,
+  deleteAction,
+  getActionStats
 } = require('../controllers/userController');
+const { getUserActionPlans } = require('../controllers/actionPlanController');
 const { authenticateToken } = require('../middleware/auth');
 
 // Apply authentication middleware to all routes
@@ -42,5 +43,10 @@ router.put('/actions/:id', updateAction);
 // @desc    Delete action (only current year)
 // @access  Private (User)
 router.delete('/actions/:id', deleteAction);
+
+// @route   GET /api/user/action-plans
+// @desc    Get action plans assigned to user
+// @access  Private
+router.get('/action-plans', getUserActionPlans);
 
 module.exports = router;

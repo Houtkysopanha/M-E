@@ -4,6 +4,8 @@ import { getCurrentUser } from '../utils/auth';
 import Header from '../components/common/Header';
 import CreateUserForm from '../components/admin/CreateUserForm';
 import UserTable from '../components/admin/UserTable';
+import ActionPlanForm from '../components/admin/ActionPlanForm';
+import ActionPlanList from '../components/admin/ActionPlanList';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
 
@@ -14,6 +16,7 @@ const SuperAdminPage = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [actionPlanRefresh, setActionPlanRefresh] = useState(0);
 
   const currentUser = getCurrentUser();
 
@@ -90,11 +93,18 @@ const SuperAdminPage = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleActionPlanCreated = (newActionPlan) => {
+    setActionPlanRefresh(prev => prev + 1);
+    setActiveTab('action-plans'); // Switch to action plans tab after creating
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'users', label: 'Manage Users', icon: '👥' },
     { id: 'create', label: 'Create User', icon: '➕' },
-    { id: 'actions', label: 'All Actions', icon: '📋' }
+    { id: 'action-plans', label: 'Action Plans', icon: '📋' },
+    { id: 'create-plan', label: 'Create Action Plan', icon: '📝' },
+    { id: 'actions', label: 'All Actions', icon: '🔍' }
   ];
 
   if (loading) {
@@ -325,6 +335,14 @@ const SuperAdminPage = () => {
 
             {activeTab === 'create' && (
               <CreateUserForm onUserCreated={handleUserCreated} />
+            )}
+
+            {activeTab === 'action-plans' && (
+              <ActionPlanList refreshTrigger={actionPlanRefresh} />
+            )}
+
+            {activeTab === 'create-plan' && (
+              <ActionPlanForm onActionPlanCreated={handleActionPlanCreated} />
             )}
 
             {activeTab === 'actions' && (

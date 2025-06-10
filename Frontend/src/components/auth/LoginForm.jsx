@@ -44,7 +44,7 @@ const LoginForm = () => {
         if (isAdmin()) {
           navigate('/super-admin');
         } else {
-          navigate('/home');
+          navigate('/dashboard');
         }
       } else {
         setError(result.message || 'Login failed');

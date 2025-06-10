@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getActionStats } from '../services/actionService';
+import { getActionStats, getUserActionPlans } from '../services/actionService';
 import { getCurrentUser } from '../utils/auth';
 import { getCurrentYear } from '../utils/checkCurrentYear';
 import Header from '../components/common/Header';
@@ -10,10 +10,11 @@ import ErrorMessage from '../components/common/ErrorMessage';
 
 const UserPage = () => {
   const [stats, setStats] = useState(null);
+  const [actionPlans, setActionPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState('action-plans');
 
   const currentUser = getCurrentUser();
   const currentYear = getCurrentYear();
@@ -21,7 +22,7 @@ const UserPage = () => {
   const fetchStats = async () => {
     try {
       const result = await getActionStats();
-      
+
       if (result.success) {
         setStats(result.data);
       } else {
@@ -29,13 +30,38 @@ const UserPage = () => {
       }
     } catch (error) {
       setError('An unexpected error occurred');
+    }
+  };
+
+  const fetchActionPlans = async () => {
+    try {
+      const result = await getUserActionPlans();
+
+      if (result.success) {
+        setActionPlans(result.data.actionPlans || []);
+      } else {
+        setError(result.message || 'Failed to load action plans');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred while loading action plans');
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      await Promise.all([fetchStats(), fetchActionPlans()]);
+    } catch (error) {
+      setError('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    fetchData();
   }, [refreshTrigger]);
 
   const handleActionCreated = () => {
@@ -44,8 +70,9 @@ const UserPage = () => {
   };
 
   const tabs = [
+    { id: 'action-plans', label: 'Action Plans', icon: '📋' },
     { id: 'create', label: 'Create Action', icon: '➕' },
-    { id: 'list', label: 'My Actions', icon: '📋' },
+    { id: 'list', label: 'My Actions', icon: '📝' },
     { id: 'stats', label: 'Statistics', icon: '📊' }
   ];
 
@@ -176,12 +203,80 @@ const UserPage = () => {
 
           {/* Tab Content */}
           <div className="animate-fade-in">
+            {activeTab === 'action-plans' && (
+              <div className="space-y-6">
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Assigned Action Plans ({actionPlans.length})
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Action plans assigned to you by administrators
+                    </p>
+                  </div>
+
+                  {actionPlans.length === 0 ? (
+                    <div className="text-center py-12">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No action plans assigned</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        You don't have any action plans assigned to you yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {actionPlans.map((plan) => (
+                        <div
+                          key={plan._id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <h4 className="text-lg font-medium text-gray-900">
+                              {plan.title}
+                            </h4>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Action Plan
+                            </span>
+                          </div>
+
+                          <div className="mb-3">
+                            {typeof plan.description === 'string' ? (
+                              <p className="text-gray-700 whitespace-pre-wrap">
+                                {plan.description}
+                              </p>
+                            ) : (
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                                  {JSON.stringify(plan.description, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>
+                              Created by: {plan.createdBy?.username || 'Unknown'}
+                            </span>
+                            <span>
+                              {new Date(plan.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {activeTab === 'create' && (
               <ActionForm onActionCreated={handleActionCreated} />
             )}
 
             {activeTab === 'list' && (
-              <ActionList 
+              <ActionList
                 refreshTrigger={refreshTrigger}
                 showUserInfo={false}
               />

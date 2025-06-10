@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getAllActions } from '../services/actionService';
 import { getCurrentUser } from '../utils/auth';
 import Header from '../components/common/Header';
@@ -191,18 +192,18 @@ const HomePage = () => {
           {/* Quick Actions */}
           <div className="mt-8 flex justify-center">
             <div className="flex space-x-4">
-              <a
-                href="/user"
+              <Link
+                to="/user"
                 className="btn-primary"
               >
                 📝 Create New Action
-              </a>
-              <a
-                href="/user"
+              </Link>
+              <Link
+                to="/user"
                 className="btn-secondary"
               >
                 📋 View My Actions
-              </a>
+              </Link>
             </div>
           </div>
         </div>

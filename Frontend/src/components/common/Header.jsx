@@ -18,7 +18,7 @@ const Header = () => {
   };
 
   const navLinks = [
-    { path: '/home', label: 'Home', icon: '🏠' },
+    { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
     { path: '/user', label: 'My Actions', icon: '📝' },
   ];
 
@@ -32,7 +32,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo and App Name */}
           <div className="flex items-center">
-            <Link to="/home" className="flex items-center space-x-2">
+            <Link to="/dashboard" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">📊</span>
               </div>

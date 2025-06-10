@@ -12,7 +12,7 @@ const LoginPage = () => {
       if (isAdmin()) {
         navigate('/super-admin');
       } else {
-        navigate('/home');
+        navigate('/dashboard');
       }
     }
   }, [navigate]);

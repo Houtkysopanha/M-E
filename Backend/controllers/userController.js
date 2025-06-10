@@ -1,4 +1,4 @@
-const Action = require('../models/Action');
+const ActionInProgress = require('../models/Action');
 const { canModifyAction, getTimeErrorMessage, getCurrentYear } = require('../utils/timeValidation');
 
 // Create new action
@@ -15,7 +15,7 @@ const createAction = async (req, res) => {
     }
 
     // Create new action
-    const newAction = new Action({
+    const newAction = new ActionInProgress({
       userId: req.user._id,
       data: data
     });
@@ -79,13 +79,13 @@ const getActions = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     // Get actions with pagination
-    const actions = await Action.find(query)
+    const actions = await ActionInProgress.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
 
     // Get total count for pagination
-    const totalActions = await Action.countDocuments(query);
+    const totalActions = await ActionInProgress.countDocuments(query);
     const totalPages = Math.ceil(totalActions / limitNum);
 
     // Format actions with additional info
@@ -131,7 +131,7 @@ const getAction = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
 
-    const action = await Action.findOne({ _id: id, userId });
+    const action = await ActionInProgress.findOne({ _id: id, userId });
 
     if (!action) {
       return res.status(404).json({
@@ -179,7 +179,7 @@ const updateAction = async (req, res) => {
     }
 
     // Find action
-    const action = await Action.findOne({ _id: id, userId });
+    const action = await ActionInProgress.findOne({ _id: id, userId });
 
     if (!action) {
       return res.status(404).json({
@@ -232,7 +232,7 @@ const deleteAction = async (req, res) => {
     const userId = req.user._id;
 
     // Find action
-    const action = await Action.findOne({ _id: id, userId });
+    const action = await ActionInProgress.findOne({ _id: id, userId });
 
     if (!action) {
       return res.status(404).json({
@@ -250,7 +250,7 @@ const deleteAction = async (req, res) => {
     }
 
     // Delete action
-    await Action.findByIdAndDelete(id);
+    await ActionInProgress.findByIdAndDelete(id);
 
     res.json({
       success: true,
@@ -273,10 +273,10 @@ const getActionStats = async (req, res) => {
     const currentYear = getCurrentYear();
 
     // Total actions
-    const totalActions = await Action.countDocuments({ userId });
+    const totalActions = await ActionInProgress.countDocuments({ userId });
 
     // Current year actions
-    const currentYearActions = await Action.countDocuments({
+    const currentYearActions = await ActionInProgress.countDocuments({
       userId,
       createdAt: {
         $gte: new Date(currentYear, 0, 1),
@@ -285,7 +285,7 @@ const getActionStats = async (req, res) => {
     });
 
     // Actions by year
-    const actionsByYear = await Action.aggregate([
+    const actionsByYear = await ActionInProgress.aggregate([
       { $match: { userId } },
       {
         $group: {

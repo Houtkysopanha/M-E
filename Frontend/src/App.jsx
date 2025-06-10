@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { isAuthenticated, isAdmin } from './utils/auth';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import PublicHomePage from './pages/PublicHomePage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import UserPage from './pages/UserPage';
@@ -13,11 +14,12 @@ function App() {
       <div className="App">
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<PublicHomePage />} />
           <Route path="/login" element={<LoginPage />} />
 
           {/* Protected Routes */}
           <Route
-            path="/home"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <HomePage />
@@ -43,32 +45,10 @@ function App() {
             }
           />
 
-          {/* Default Route */}
-          <Route
-            path="/"
-            element={
-              isAuthenticated() ? (
-                isAdmin() ? (
-                  <Navigate to="/super-admin" replace />
-                ) : (
-                  <Navigate to="/home" replace />
-                )
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-
           {/* Catch all route */}
           <Route
             path="*"
-            element={
-              isAuthenticated() ? (
-                <Navigate to="/home" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            element={<Navigate to="/" replace />}
           />
         </Routes>
       </div>
