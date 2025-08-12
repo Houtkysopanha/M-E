@@ -14,7 +14,7 @@ const {
   deleteActionPlan,
   getActionPlan
 } = require('../controllers/actionPlanController');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../MiddleWare/auth');
 
 // Apply authentication and admin middleware to all routes
 router.use(authenticateToken);

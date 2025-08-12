@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { generateToken } = require('../middleware/auth');
+const { generateToken } = require('../MiddleWare/auth');
 
 // Login user
 const login = async (req, res) => {

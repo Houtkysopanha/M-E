@@ -9,7 +9,7 @@ const {
   getActionStats
 } = require('../controllers/userController');
 const { getUserActionPlans } = require('../controllers/actionPlanController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('../MiddleWare/auth');
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
